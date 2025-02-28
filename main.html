@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lucky 6</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: linear-gradient(to bottom, #001f3f, #0074D9);
+            color: white;
+        }
+        .ball {
+            display: inline-block;
+            width: 80px;
+            height: 80px;
+            line-height: 80px;
+            border-radius: 50%;
+            margin: 5px;
+            font-weight: bold;
+            font-size: 24px;
+            color: white;
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: holdDrum 3s ease-in-out forwards, exitDrum 2s ease-in-out 3s forwards;
+        }
+        .red { background: red; }
+        .blue { background: blue; }
+        .green { background: green; }
+        .yellow { background: yellow; color: black; }
+        .purple { background: purple; }
+        .orange { background: orange; color: black; }
+        
+        @keyframes holdDrum {
+            0% { opacity: 1; transform: translateX(-50%) scale(1); }
+            100% { opacity: 1; transform: translateX(-50%) scale(1); }
+        }
+        
+        @keyframes exitDrum {
+            0% { bottom: 20px; opacity: 1; transform: translateX(-50%) scale(1); }
+            100% { bottom: 150px; opacity: 1; transform: translateX(-50%) scale(1); }
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            display: inline-block;
+            margin-top: 20px;
+        }
+        button {
+            background: gold;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        button:hover {
+            background: orange;
+        }
+        .drum {
+            display: inline-block;
+            width: 120px;
+            height: 120px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        .drawn-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Lucky 6</h1>
+    <div class="container">
+        <p>Izaberite 6 brojeva (1-48):</p>
+        <input type="text" id="numbers" placeholder="Primer: 5,12,23,34,40,45">
+        <button onclick="playGame()">Igraj</button>
+        <button onclick="randomNumbers()">Nasumični brojevi</button>
+        <h2>Vaši brojevi: <span id="chosenNumbers"></span></h2>
+        <div class="drum" id="drum"></div>
+        <h3>Izvučeni brojevi:</h3>
+        <div class="drawn-container" id="drawnNumbers"></div>
+        <h3 id="result"></h3>
+    </div>
+    <audio id="drumSound" src="https://www.fesliyanstudios.com/play-mp3/4385"></audio>
+    <script>
+        function randomNumbers() {
+            let nums = new Set();
+            while (nums.size < 6) nums.add(Math.floor(Math.random() * 48) + 1);
+            document.getElementById("numbers").value = Array.from(nums).join(",");
+        }
+
+        function getColor(number) {
+            if (number <= 8) return "red";
+            if (number <= 16) return "blue";
+            if (number <= 24) return "green";
+            if (number <= 32) return "yellow";
+            if (number <= 40) return "purple";
+            return "orange";
+        }
+
+        function playGame() {
+            let input = document.getElementById("numbers").value;
+            let chosen = input.split(",").map(n => parseInt(n.trim())).filter(n => n >= 1 && n <= 48);
+            if (chosen.length !== 6) return alert("Morate uneti tačno 6 brojeva između 1 i 48!");
+            document.getElementById("chosenNumbers").innerText = chosen.join(", ");
+            
+            let drum = document.getElementById("drum");
+            let allNumbers = Array.from({ length: 48 }, (_, i) => i + 1);
+            let drawn = [];
+            let matches = 0, matchIndex = 0;
+            document.getElementById("drawnNumbers").innerHTML = "";
+            document.getElementById("result").innerText = "";
+            let drumSound = document.getElementById("drumSound");
+            drumSound.play();
+
+            function draw() {
+                if (drawn.length < 35) {
+                    let index = Math.floor(Math.random() * allNumbers.length);
+                    let num = allNumbers.splice(index, 1)[0];
+                    drawn.push(num);
+                    
+                    let ball = document.createElement("div");
+                    ball.className = "ball " + getColor(num);
+                    ball.innerText = num;
+                    drum.appendChild(ball);
+                    
+                    setTimeout(() => {
+                        drum.removeChild(ball);
+                        let drawnContainer = document.getElementById("drawnNumbers");
+                        let newBall = ball.cloneNode(true);
+                        newBall.style.position = "static";
+                        newBall.style.animation = "none";
+                        drawnContainer.appendChild(newBall);
+                    }, 5000);
+                    
+                    if (chosen.includes(num)) {
+                        matches++;
+                        if (matches === 6) matchIndex = drawn.length;
+                    }
+                    setTimeout(draw, 5000);
+                } else {
+                    drumSound.pause();
+                    let message = matches === 6 ? `Pogodili ste svih 6 u ${matchIndex}. izvlačenju!` : `Pogodili ste ${matches} brojeva.`;
+                    document.getElementById("result").innerText = message;
+                }
+            }
+            draw();
+        }
+    </script>
+</body>
+</html>
